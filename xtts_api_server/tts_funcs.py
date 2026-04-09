@@ -22,11 +22,36 @@ class InvalidSettingsError(Exception):
 
 # List of supported language codes (Retained for API compatibility)
 supported_languages = {
-    "ar":"Arabic", "pt":"Brazilian Portuguese", "zh-cn":"Chinese",
-    "cs":"Czech", "nl":"Dutch", "en":"English", "fr":"French",
-    "de":"German", "it":"Italian", "pl":"Polish", "ru":"Russian",
-    "es":"Spanish", "tr":"Turkish", "ja":"Japanese", "ko":"Korean",
-    "hu":"Hungarian", "hi":"Hindi"
+    "ab":"Abkhazian", "acw":"Hijazi Arabic", "acx":"Omani Arabic", "adx":"Amdo Tibetan",
+    "ady":"Adyghe", "aeb":"Tunisian Arabic", "afb":"Gulf Arabic", "arb":"Standard Arabic",
+    "ars":"Najdi Arabic", "ary":"Moroccan Arabic", "arz":"Egyptian Arabic", "as":"Assamese",
+    "ayl":"Libyan Arabic", "ba":"Bashkir", "be":"Belarusian", "bg":"Bulgarian",
+    "bn":"Bengali", "bo":"Tibetan", "br":"Breton", "brx":"Bodo",
+    "bs":"Bosnian", "ca":"Catalan", "ckb":"Central Kurdish", "cs":"Czech",
+    "cv":"Chuvash", "cy":"Welsh", "da":"Danish", "de":"German",
+    "dgo":"Dogri", "dv":"Dhivehi", "el":"Greek", "en":"English",
+    "eo":"Esperanto", "es":"Spanish", "et":"Estonian", "eu":"Basque",
+    "fa":"Persian", "fi":"Finnish", "fr":"French", "fue":"Borgu Fulfulde",
+    "fy":"Western Frisian", "ga":"Irish", "gjk":"Kachi Koli", "gl":"Galician",
+    "gu":"Gujarati", "gui":"Eastern Bolivian Guaraní", "hi":"Hindi", "hno":"Northern Hindko",
+    "hr":"Croatian", "hu":"Hungarian", "hy":"Armenian", "id":"Indonesian",
+    "is":"Icelandic", "it":"Italian", "ja":"Japanese", "ka":"Georgian",
+    "kab":"Kabyle", "kbd":"Kabardian", "kk":"Kazakh", "kln":"Kalenjin",
+    "kmr":"Northern Kurdish", "kn":"Kannada", "knn":"Konkani", "ko":"Korean",
+    "ks":"Kashmiri", "kxp":"Wadiyara Koli", "ky":"Kirghiz", "lg":"Ganda",
+    "lt":"Lithuanian", "ltg":"Latgalian", "luo":"Luo", "lus":"Lushai",
+    "lv":"Latvian", "mai":"Maithili", "mhr":"Eastern Mari", "mk":"Macedonian",
+    "ml":"Malayalam", "mn":"Mongolian", "mni":"Manipuri", "mr":"Marathi",
+    "mrj":"Western Mari", "mt":"Maltese", "mvy":"Indus Kohistani", "nl":"Dutch",
+    "no":"Norwegian", "npi":"Nepali", "odk":"Od", "orc":"Orma",
+    "ory":"Odia", "pa":"Panjabi", "phl":"Phalura", "phr":"Pahari-Potwari",
+    "pl":"Polish", "ps":"Pushto", "pt":"Portuguese", "ro":"Romanian",
+    "ru":"Russian", "rw":"Kinyarwanda", "sa":"Sanskrit", "sat":"Santali",
+    "sd":"Sindhi", "sk":"Slovak", "sl":"Slovenian", "sr":"Serbian",
+    "sv":"Swedish", "sw":"Swahili", "ta":"Tamil", "te":"Telugu",
+    "th":"Thai", "tr":"Turkish", "tt":"Tatar", "ug":"Uighur",
+    "uk":"Ukrainian", "ur":"Urdu", "uz":"Uzbek", "vi":"Vietnamese",
+    "yue":"Cantonese", "zh":"Chinese"
 }
 
 default_tts_settings = {

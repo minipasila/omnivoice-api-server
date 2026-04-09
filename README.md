@@ -9,7 +9,7 @@ By using this server, you get the superior zero-shot voice cloning and fast infe
 There's a **Google Colab version** included in the repository (`XTTS-api-server.ipynb`) you can use if your computer does not have a dedicated GPU.
 
 ## Key Features vs Original XTTS
-* **OmniVoice Backend:** Uses `k2-fsa/OmniVoice`, supporting 600+ languages and offering better zero-shot voice cloning.
+* **OmniVoice Backend:** Uses `k2-fsa/OmniVoice`, supporting 600+ languages and offering better zero-shot voice cloning. (Currently the code supports 118 languages that have a minimum of 20 hours of training data)
 * **API Compatible:** Your existing SillyTavern (or other frontend) settings will still work. XTTS generation parameters (like temperature and speed) are automatically translated into OmniVoice equivalents.
 * **Optimized VRAM:** Includes automatic PyTorch garbage collection and inference-mode optimizations to prevent Out-Of-Memory (OOM) errors over long sessions.
 
