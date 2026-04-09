@@ -67,7 +67,8 @@ default_tts_settings = {
 reversed_supported_languages = {name: code for code, name in supported_languages.items()}
 
 class TTSWrapper:
-    def __init__(self, output_folder="./output", speaker_folder="./speakers", model_folder="./models", lowvram=False, model_source="local", model_version="k2-fsa/OmniVoice", device="cuda", deepspeed=False, enable_cache_results=True):
+    def __init__(self, output_folder="./output", speaker_folder="./speakers", model_folder="./models", lowvram=False, model_source="local", model_version="k2-fsa/OmniVoice", device="cuda", deepspeed=False, enable_cache_results=True, load_asr=True):
+        self.load_asr = load_asr
         self.cuda = device
         self.device = 'cpu' if lowvram else (self.cuda if torch.cuda.is_available() else "cpu")
         self.lowvram = lowvram
@@ -150,14 +151,18 @@ class TTSWrapper:
             logger.error(f"Error updating cache: {e}")
 
     def load_model(self, load=True):
-        logger.info(f"Loading OmniVoice model '{self.model_version}' to {self.device}...")
+        logger.info(f"Loading OmniVoice model '{self.model_version}' to {self.device} (ASR: {self.load_asr})...")
         dtype = torch.float16 if "cuda" in self.device else torch.float32
-        
+
+        # If we really want to be sure Whisper doesn't touch anything:
+        if not self.load_asr:
+            os.environ["OMNIVOICE_SKIP_ASR"] = "1" # Some versions check this
+
         self.model = OmniVoice.from_pretrained(
             self.model_version,
             device_map=self.device,
             dtype=dtype,
-            load_asr=True # Allows omitted transcripts for reference audio
+            load_asr=self.load_asr
         )
         logger.info("OmniVoice model successfully loaded!")
 
@@ -260,28 +265,25 @@ class TTSWrapper:
         return text
 
     @torch.inference_mode()
-    async def stream_generation(self, text, speaker_wav, language, output_file):
+    async def stream_generation(self, text, speaker_wav_path, language, output_file, transcript=None):
         generate_start_time = time.time()
-        
+
+        ref_text = transcript
+        if ref_text is None and not self.load_asr:
+            ref_text = ""
+
         try:
-            # Scale XTTS temperature parameter into OmniVoice position_temperature
-            pos_temp = self.tts_settings.get("temperature", 0.75) * 6.5 
+            pos_temp = self.tts_settings.get("temperature", 0.75) * 6.5
             gen_config = OmniVoiceGenerationConfig(
                 position_temperature=pos_temp,
-                class_temperature=0.0,
-                preprocess_prompt=True,  # Fixes prepended audio issues
-                postprocess_output=True  # Fixes trailing repeats/artifacts
-            )
-
-            # Properly process the reference audio into a prompt
-            voice_clone_prompt = self.model.create_voice_clone_prompt(
-                ref_audio=speaker_wav
+                preprocess_prompt=True,
+                postprocess_output=True
             )
 
             audio = self.model.generate(
                 text=text,
-                language=language, # Now explicitly passing the language
-                voice_clone_prompt=voice_clone_prompt,
+                ref_audio=speaker_wav_path,
+                ref_text=ref_text,
                 speed=self.tts_settings.get("speed", 1.0),
                 generation_config=gen_config
             )
@@ -290,10 +292,8 @@ class TTSWrapper:
             waveform = np.clip(waveform, -1.0, 1.0)
             waveform = (waveform * 32767).astype(np.int16)
 
-            # Save file immediately
             torchaudio.save(output_file, audio[0].cpu(), 24000)
 
-            # Yield byte chunks to simulate streaming behavior
             wav_bytes = waveform.tobytes()
             chunk_size = 4096
             for i in range(0, len(wav_bytes), chunk_size):
@@ -303,29 +303,31 @@ class TTSWrapper:
             gc.collect()
             torch.cuda.empty_cache()
 
-        logger.info(f"Stream generation time: {time.time() - generate_start_time:.2f} s")
+        logger.info(f"Stream generation processing time: {time.time() - generate_start_time:.2f} s")
 
     @torch.inference_mode()
-    def local_generation(self, text, speaker_wav, language, output_file):
+    def local_generation(self, text, speaker_wav_path, language, output_file, transcript=None):
         generate_start_time = time.time()
-        
+
+        # Handle ASR skip logic: if no transcript and ASR is off, send empty string to trick it
+        ref_text = transcript
+        if ref_text is None and not self.load_asr:
+            logger.warning("ASR disabled and no .txt found. Using empty ref_text to skip Whisper.")
+            ref_text = ""
+
         try:
-            pos_temp = self.tts_settings.get("temperature", 0.75) * 6.5 
+            pos_temp = self.tts_settings.get("temperature", 0.75) * 6.5
             gen_config = OmniVoiceGenerationConfig(
                 position_temperature=pos_temp,
-                preprocess_prompt=True,  # Fixes prepended audio issues
-                postprocess_output=True  # Fixes trailing repeats/artifacts
+                preprocess_prompt=True,
+                postprocess_output=True
             )
 
-            # Properly process the reference audio into a prompt
-            voice_clone_prompt = self.model.create_voice_clone_prompt(
-                ref_audio=speaker_wav
-            )
-
+            # Pass ref_audio and ref_text directly into generate() as per README
             audio = self.model.generate(
                 text=text,
-                language=language, # Now explicitly passing the language
-                voice_clone_prompt=voice_clone_prompt,
+                ref_audio=speaker_wav_path,
+                ref_text=ref_text,
                 speed=self.tts_settings.get("speed", 1.0),
                 generation_config=gen_config
             )
@@ -341,23 +343,37 @@ class TTSWrapper:
 
     def get_speaker_wav(self, speaker_name_or_path):
         if speaker_name_or_path.endswith('.wav'):
-            speaker_wav = speaker_name_or_path if os.path.isabs(speaker_name_or_path) else os.path.join(self.speaker_folder, speaker_name_or_path)
+            speaker_wav_path = speaker_name_or_path if os.path.isabs(speaker_name_or_path) else os.path.join(self.speaker_folder, speaker_name_or_path)
         else:
-            full_path = os.path.join(self.speaker_folder, speaker_name_or_path) 
+            full_path = os.path.join(self.speaker_folder, speaker_name_or_path)
             wav_file = f"{full_path}.wav"
             if os.path.isdir(full_path):
-                speaker_wav = [ os.path.join(full_path,wav) for wav in self.get_wav_files(full_path) ]
-                if not speaker_wav: raise ValueError(f"no wav files found in {full_path}")
+                subdir_wavs = self.get_wav_files(full_path)
+                if not subdir_wavs: raise ValueError(f"no wav files found in {full_path}")
+                speaker_wav_path = os.path.join(full_path, subdir_wavs[0])
             elif os.path.isfile(wav_file):
-                speaker_wav = wav_file
+                speaker_wav_path = wav_file
             else:
                 raise ValueError(f"Speaker {speaker_name_or_path} not found.")
 
-        # OmniVoice expects a single string path, take the first sample if a folder is passed
-        return speaker_wav[0] if isinstance(speaker_wav, list) else speaker_wav
+        # Look for a transcript file (.txt) with the same name as the .wav
+        transcript = None
+        transcript_path = speaker_wav_path.rsplit('.', 1)[0] + '.txt'
+        if os.path.exists(transcript_path):
+            try:
+                with open(transcript_path, 'r', encoding='utf-8') as f:
+                    transcript = f.read().strip()
+                logger.info(f"Found transcript for speaker: {transcript_path}")
+            except Exception as e:
+                logger.error(f"Failed to read transcript: {e}")
+
+        # Now we return a tuple: (path_to_wav, transcript_text_or_None)
+        return speaker_wav_path, transcript
 
     def process_tts_to_file(self, text, speaker_name_or_path, language, file_name_or_path="out.wav", stream=False):
-        speaker_wav = self.get_speaker_wav(speaker_name_or_path)
+        # UNPACK BOTH HERE:
+        speaker_wav_path, transcript = self.get_speaker_wav(speaker_name_or_path)
+
         output_file = file_name_or_path if os.path.isabs(file_name_or_path) else os.path.join(self.output_folder, file_name_or_path)
 
         if os.path.isfile(text) and text.lower().endswith('.txt'):
@@ -377,12 +393,14 @@ class TTSWrapper:
 
         if stream:
             async def stream_fn():
-                async for chunk in self.stream_generation(clear_text, speaker_wav, language, output_file):
+                # PASS transcript HERE:
+                async for chunk in self.stream_generation(clear_text, speaker_wav_path, language, output_file, transcript=transcript):
                     yield chunk
                 self.update_cache(text_params, output_file)
             return stream_fn()
         else:
-            self.local_generation(clear_text, speaker_wav, language, output_file)
-        
+            # PASS transcript HERE:
+            self.local_generation(clear_text, speaker_wav_path, language, output_file, transcript=transcript)
+
         self.update_cache(text_params, output_file)
         return output_file

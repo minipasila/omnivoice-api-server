@@ -20,6 +20,7 @@ parser.add_argument("--use-cache", action='store_true', help="Enables caching of
 parser.add_argument("--streaming-mode", action='store_true', help="Enables streaming mode.")
 parser.add_argument("--streaming-mode-improve", action='store_true', help="Includes an improved streaming mode.")
 parser.add_argument("--stream-play-sync", action='store_true', help="Additional flag for streaming mode.")
+parser.add_argument("--no-asr", action='store_true', help="Disable loading the ASR (Whisper) model to save VRAM/bandwidth.")
 
 args = parser.parse_args()
 
@@ -42,6 +43,7 @@ os.environ["LOWVRAM_MODE"] = str(args.lowvram).lower()
 os.environ["STREAM_MODE"] = str(args.streaming_mode).lower() 
 os.environ["STREAM_MODE_IMPROVE"] = str(args.streaming_mode_improve).lower() 
 os.environ["STREAM_PLAY_SYNC"] = str(args.stream_play_sync).lower() 
+os.environ["LOAD_ASR"] = str(not args.no_asr).lower()
 
 from xtts_api_server.server import app
 

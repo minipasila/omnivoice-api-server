@@ -24,6 +24,7 @@ MODEL_VERSION = os.getenv("MODEL_VERSION", "k2-fsa/OmniVoice")  # Defaulted to O
 LOWVRAM_MODE = os.getenv("LOWVRAM_MODE") == 'true'
 DEEPSPEED = os.getenv("DEEPSPEED") == 'true'
 USE_CACHE = os.getenv("USE_CACHE") == 'true'
+LOAD_ASR = os.getenv("LOAD_ASR", "true") == "true"
 
 # STREAMING VARS
 STREAM_MODE = os.getenv("STREAM_MODE") == 'true'
@@ -32,7 +33,7 @@ STREAM_PLAY_SYNC = os.getenv("STREAM_PLAY_SYNC") == 'true'
 
 # Initialize OmniVoice API wrapper
 app = FastAPI()
-XTTS = TTSWrapper(OUTPUT_FOLDER, SPEAKER_FOLDER, MODEL_FOLDER, LOWVRAM_MODE, MODEL_SOURCE, MODEL_VERSION, DEVICE, DEEPSPEED, USE_CACHE)
+XTTS = TTSWrapper(OUTPUT_FOLDER, SPEAKER_FOLDER, MODEL_FOLDER, LOWVRAM_MODE, MODEL_SOURCE, MODEL_VERSION, DEVICE, DEEPSPEED, USE_CACHE, LOAD_ASR)
 
 XTTS.load_model() 
 
