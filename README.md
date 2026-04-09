@@ -6,7 +6,7 @@ This project is a fork of the original [xtts-api-server](https://github.com/dasw
 
 By using this server, you get the superior zero-shot voice cloning and fast inference of OmniVoice, without needing to change any of your frontend client settings!
 
-There's a **Google Colab version** included in the repository (`XTTS-api-server.ipynb`) you can use if your computer does not have a dedicated GPU.
+There's a **Google Colab version** included in the repository (`OmniVoice-api-server.ipynb`) you can use if your computer does not have a dedicated GPU. (Also there's one that specifically works for Kaggle `OmniVoice-api-server-Kaggle.ipynb`)
 
 ## Key Features vs Original XTTS
 * **OmniVoice Backend:** Uses `k2-fsa/OmniVoice`, supporting 600+ languages and offering better zero-shot voice cloning. (Currently the code supports 118 languages that have a minimum of 20 hours of training data)
