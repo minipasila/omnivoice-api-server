@@ -268,12 +268,20 @@ class TTSWrapper:
             pos_temp = self.tts_settings.get("temperature", 0.75) * 6.5 
             gen_config = OmniVoiceGenerationConfig(
                 position_temperature=pos_temp,
-                class_temperature=0.0
+                class_temperature=0.0,
+                preprocess_prompt=True,  # Fixes prepended audio issues
+                postprocess_output=True  # Fixes trailing repeats/artifacts
+            )
+
+            # Properly process the reference audio into a prompt
+            voice_clone_prompt = self.model.create_voice_clone_prompt(
+                ref_audio=speaker_wav
             )
 
             audio = self.model.generate(
                 text=text,
-                ref_audio=speaker_wav,
+                language=language, # Now explicitly passing the language
+                voice_clone_prompt=voice_clone_prompt,
                 speed=self.tts_settings.get("speed", 1.0),
                 generation_config=gen_config
             )
@@ -303,11 +311,21 @@ class TTSWrapper:
         
         try:
             pos_temp = self.tts_settings.get("temperature", 0.75) * 6.5 
-            gen_config = OmniVoiceGenerationConfig(position_temperature=pos_temp)
+            gen_config = OmniVoiceGenerationConfig(
+                position_temperature=pos_temp,
+                preprocess_prompt=True,  # Fixes prepended audio issues
+                postprocess_output=True  # Fixes trailing repeats/artifacts
+            )
+
+            # Properly process the reference audio into a prompt
+            voice_clone_prompt = self.model.create_voice_clone_prompt(
+                ref_audio=speaker_wav
+            )
 
             audio = self.model.generate(
                 text=text,
-                ref_audio=speaker_wav,
+                language=language, # Now explicitly passing the language
+                voice_clone_prompt=voice_clone_prompt,
                 speed=self.tts_settings.get("speed", 1.0),
                 generation_config=gen_config
             )
