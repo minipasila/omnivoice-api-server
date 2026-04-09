@@ -7,7 +7,7 @@ REM report any issues or bugs on the GitHub repository.
 REM
 REM GitHub: https://github.com/daswer123/xtts-api-server
 REM Issues: https://github.com/daswer123/xtts-api-server/issues
-title XTTS Launcher
+title OmniVoice Launcher
 setlocal
 
 REM ANSI Escape Code for Colors
