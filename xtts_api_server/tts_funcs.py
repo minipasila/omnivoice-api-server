@@ -49,6 +49,11 @@ class TTSWrapper:
 
         self.model_source = model_source
         self.model_version = model_version
+        # --- ADD THIS SAFEGUARD ---
+        if self.model_version in ["v2.0.0", "v2.0.1", "v2.0.2", "v2.0.3", "main"]:
+            logger.warning(f"Legacy XTTS model version '{self.model_version}' detected. Overriding to 'k2-fsa/OmniVoice'.")
+            self.model_version = "k2-fsa/OmniVoice"
+        # --------------------------
         self.tts_settings = default_tts_settings
         self.stream_chunk_size = 100
 
