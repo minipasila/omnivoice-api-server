@@ -10,8 +10,10 @@ There's a **Google Colab version** included in the repository (`OmniVoice-api-se
 
 ## Key Features vs Original XTTS
 * **OmniVoice Backend:** Uses `k2-fsa/OmniVoice`, supporting 600+ languages and offering better zero-shot voice cloning. (Currently the code supports 118 languages that have a minimum of 20 hours of training data)
+* **Speaker Transcripts:** Supports providing a `.txt` file with the same name as the speaker `.wav` to skip ASR and provide the ground truth text, ensuring even more accurate cloning.
 * **API Compatible:** Your existing SillyTavern (or other frontend) settings will still work. XTTS generation parameters (like temperature and speed) are automatically translated into OmniVoice equivalents.
 * **Optimized VRAM:** Includes automatic PyTorch garbage collection and inference-mode optimizations to prevent Out-Of-Memory (OOM) errors over long sessions.
+* **Fast Downloading:** Uses `hf_transfer` for high-speed model weight downloads from HuggingFace.
 
 ## Installation
 
@@ -48,26 +50,37 @@ To maintain compatibility with old launcher scripts and frontend clients, the ex
 `python -m xtts_api_server` will run on default ip and port (localhost:8020)
 
 ```text
-usage: xtts_api_server [-h] [-hs HOST] [-p PORT] [-sf SPEAKER_FOLDER] [-o OUTPUT] [-t TUNNEL_URL] [-ms MODEL_SOURCE] [--listen] [--use-cache] [--lowvram] [--deepspeed] [--streaming-mode] [--stream-play-sync]
+usage: xtts_api_server [-h] [-hs HOST] [-p PORT] [-d DEVICE] [-sf SPEAKER_FOLDER] [-o OUTPUT] [-mf MODEL_FOLDER] [-t TUNNEL_URL] [-ms MODEL_SOURCE] [-v MODEL_VERSION] [--listen] [--lowvram] [--deepspeed] [--use-cache] [--streaming-mode] [--streaming-mode-improve] [--stream-play-sync] [--no-asr]
 
 Run OmniVoice within an XTTS-compatible FastAPI application
 
 options:
-  -h, --help show this help message and exit
+  -h, --help            show this help message and exit
   -hs HOST, --host HOST
   -p PORT, --port PORT
-  -d DEVICE, --device DEVICE `cpu` or `cuda`, you can specify which video card to use, for example, `cuda:0`
-  -sf SPEAKER_FOLDER, --speaker-folder The folder where you get the samples for tts
-  -o OUTPUT, --output Output folder
-  -mf MODELS_FOLDERS, --model-folder Folder where models will be stored
-  -t TUNNEL_URL, --tunnel URL of tunnel used (e.g: ngrok, localtunnel)
-  -ms MODEL_SOURCE, --model-source ["local"] (Kept for compatibility)
-  -v MODEL_VERSION, --version Defaults to "k2-fsa/OmniVoice". Will download automatically from HuggingFace.
-  --listen Allows the server to be used outside the local computer, similar to -hs 0.0.0.0
-  --use-cache Enables caching of results. If there is a repeated request, you will get a file instead of generating from scratch.
-  --lowvram (Ignored: OmniVoice handles memory chunking natively)
-  --deepspeed (Ignored: Kept so old launcher scripts don't break)
-  --streaming-mode Enables local audio playback stream simulation.
+  -d DEVICE, --device DEVICE
+                        `cpu` or `cuda`, you can specify which video card to use, for example, `cuda:0`
+  -sf SPEAKER_FOLDER, --speaker-folder SPEAKER_FOLDER
+                        The folder where you get the samples for tts
+  -o OUTPUT, --output OUTPUT
+                        Output folder
+  -mf MODEL_FOLDER, --model-folder MODEL_FOLDER
+                        Folder where models will be stored
+  -t TUNNEL_URL, --tunnel TUNNEL_URL
+                        URL of tunnel used (e.g: ngrok, localtunnel)
+  -ms MODEL_SOURCE, --model-source {api,apiManual,local}
+                        Kept for compatibility
+  -v MODEL_VERSION, --version MODEL_VERSION
+                        Defaults to "k2-fsa/OmniVoice". Will download automatically from HuggingFace.
+  --listen              Allows the server to be used outside the local computer, similar to -hs 0.0.0.0
+  --lowvram             Force the model onto the CPU.
+  --deepspeed           (Ignored: Kept so old launcher scripts don't break)
+  --use-cache           Enables caching of results. If there is a repeated request, you will get a file instead of generating from scratch.
+  --streaming-mode      Enables local audio playback stream simulation.
+  --streaming-mode-improve
+                        Includes an improved streaming mode.
+  --stream-play-sync    Additional flag for streaming mode.
+  --no-asr              Disable loading the ASR (Whisper) model to save VRAM/bandwidth. Recommended if you provide transcripts for all speakers.
 ```
 
 If you want your host to listen on your local network, use `-hs 0.0.0.0` or use `--listen`.
@@ -83,6 +96,12 @@ API Docs can be accessed from [http://localhost:8020/docs](http://localhost:8020
 ## How to add a speaker
 
 By default, a `speakers` folder will appear in the directory. You need to put `.wav` files with your voice samples there. You can also create a subfolder and put several voice samples of the same speaker inside; the server will automatically use the first one as a preview.
+
+### Using Ground Truth Transcripts (Recommended)
+OmniVoice uses Whisper (ASR) by default to understand what the speaker is saying in the reference clip. For even better results, you can provide the exact text for each clip:
+1. Put a `.txt` file with the **exact same name** as your `.wav` file in the same folder (e.g., `speaker1.wav` and `speaker1.txt`).
+2. Put the text content inside the `.txt` file.
+3. If you do this for all speakers, you can run the server with `--no-asr` to save about 2–3GB of VRAM and improve startup speed!
 
 ## Note on creating samples for quality voice cloning
 
