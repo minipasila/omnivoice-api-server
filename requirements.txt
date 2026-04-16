@@ -5,7 +5,6 @@ loguru
 pydantic
 pydub
 python-dotenv
---extra-index-url https://download.pytorch.org/whl/cu128
 torch>=2.4
 torchaudio>=2.4
 uvicorn
