@@ -17,6 +17,8 @@ There's a **Google Colab version** included in the repository (`OmniVoice-api-se
 
 ## Installation
 
+This project is recommended to be used with **Python 3.12**.
+
 Since the package relies on the latest GitHub version of OmniVoice, it is recommended to install directly from the repository.
 
 **Step 1: Install PyTorch**
