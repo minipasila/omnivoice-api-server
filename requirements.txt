@@ -5,8 +5,9 @@ loguru
 pydantic
 pydub
 python-dotenv
-torch>=2.4
-torchaudio>=2.4
+--extra-index-url https://download.pytorch.org/whl/cu128
+torch==2.8.0+cu128
+torchaudio==2.8.0+cu128
 uvicorn
 uuid
 git+https://github.com/k2-fsa/OmniVoice.git

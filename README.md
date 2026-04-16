@@ -22,8 +22,8 @@ Since the package relies on the latest GitHub version of OmniVoice, it is recomm
 **Step 1: Install PyTorch**
 We recommend installing the **GPU version** to ensure fast processing.
 ```bash
-# Windows / Linux (CUDA 12.1 or 12.4 recommended)
-pip install torch>=2.4 torchaudio>=2.4 --index-url https://download.pytorch.org/whl/cu121
+# Install pytorch with your CUDA version, e.g.
+pip install torch==2.8.0+cu128 torchaudio==2.8.0+cu128 --extra-index-url https://download.pytorch.org/whl/cu128
 ```
 
 **Step 2: Install the Server**
