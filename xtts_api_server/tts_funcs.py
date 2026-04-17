@@ -9,6 +9,7 @@ import io
 import wave
 import numpy as np
 import gc
+import soundfile as sf
 
 from loguru import logger
 from datetime import datetime
@@ -288,11 +289,18 @@ class TTSWrapper:
                 generation_config=gen_config
             )
 
-            waveform = audio[0].squeeze(0).cpu().numpy()
+            # Handle both PyTorch tensor and numpy array return types
+            audio_data = audio[0]
+            if isinstance(audio_data, torch.Tensor):
+                waveform = audio_data.squeeze(0).cpu().numpy()
+                torchaudio.save(output_file, audio_data.cpu(), 24000)
+            else:
+                # OmniVoice returns numpy array (shape: [samples], dtype: float32)
+                waveform = audio_data
+                sf.write(output_file, audio_data, 24000)
+            
             waveform = np.clip(waveform, -1.0, 1.0)
             waveform = (waveform * 32767).astype(np.int16)
-
-            torchaudio.save(output_file, audio[0].cpu(), 24000)
 
             wav_bytes = waveform.tobytes()
             chunk_size = 4096
@@ -331,7 +339,14 @@ class TTSWrapper:
                 speed=self.tts_settings.get("speed", 1.0),
                 generation_config=gen_config
             )
-            torchaudio.save(output_file, audio[0].cpu(), 24000)
+            
+            # Handle both PyTorch tensor and numpy array return types
+            audio_data = audio[0]
+            if isinstance(audio_data, torch.Tensor):
+                torchaudio.save(output_file, audio_data.cpu(), 24000)
+            else:
+                # OmniVoice returns numpy array (shape: [samples], dtype: float32)
+                sf.write(output_file, audio_data, 24000)
         finally:
             gc.collect()
             torch.cuda.empty_cache()

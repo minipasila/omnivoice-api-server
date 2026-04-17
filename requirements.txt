@@ -5,6 +5,7 @@ loguru
 pydantic
 pydub
 python-dotenv
+librosa
 torch>=2.4
 torchaudio>=2.4
 uvicorn
