@@ -159,8 +159,23 @@ class TTSWrapper:
         if not self.load_asr:
             os.environ["OMNIVOICE_SKIP_ASR"] = "1" # Some versions check this
 
+        # --- FIX: Use local cache if available to avoid re-downloading on README updates ---
+        model_path = self.model_version
+        if not os.path.isdir(self.model_version):
+            try:
+                from huggingface_hub import snapshot_download
+                # local_files_only=True prevents re-downloading when remote README changes
+                cached_path = snapshot_download(self.model_version, local_files_only=True)
+                if cached_path and os.path.isdir(cached_path):
+                    model_path = cached_path
+                    logger.info(f"Using cached model from: {cached_path}")
+            except Exception:
+                # If not cached yet, fall back to repo ID (will download normally)
+                pass
+        # ----------------------------------------------------------------------------------
+
         self.model = OmniVoice.from_pretrained(
-            self.model_version,
+            model_path,
             device_map=self.device,
             dtype=dtype,
             load_asr=self.load_asr
