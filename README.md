@@ -2,7 +2,7 @@
 
 A simple FastAPI Server to run [OmniVoice](https://github.com/k2-fsa/OmniVoice) as a drop-in replacement for XTTSv2. 
 
-This project is a fork of the original [xtts-api-server](https://github.com/daswer123/xtts-api-server), heavily modified to use the state-of-the-art **OmniVoice** engine while maintaining **100% API compatibility** with clients like [SillyTavern](https://github.com/SillyTavern/SillyTavern). 
+This project is a fork of the original [xtts-api-server](https://github.com/daswer123/xtts-api-server), heavily modified to use the state-of-the-art **OmniVoice** engine while maintaining **100% API compatibility** with clients like [SillyTavern](https://github.com/SillyTavern/SillyTavern) and [Voxta](https://voxta.ai). 
 
 By using this server, you get the superior zero-shot voice cloning and fast inference of OmniVoice, without needing to change any of your frontend client settings!
 
@@ -112,6 +112,62 @@ OmniVoice is highly accurate, meaning it will clone background noise if your sam
 * Ensure the audio is down-sampled to a Mono, 24000Hz 16 Bit wav file. 
 * Ensure the clip doesn't have background noises, hissing, or music. Clean audio is key!
 * Make sure the clip doesn't start or end with breathy sounds (breathing in/out etc).
+
+---
+
+## Using with Voxta
+
+To use OmniVoice in Voxta, you will need to add a **Remote TTS (HTTP API)** module in your Voxta settings. Because this server is XTTS-compatible, use the following exact configuration to get it running seamlessly.
+
+### Parameters
+* **Audio Content Type:** `audio/wav`
+* **Force Conversion:** Checked
+* **Request Url Template:** `http://localhost:8020/tts_to_audio/` *(Adjust IP/Port if your server is not running locally)*
+* **Request Headers:** *(Leave empty/not used)*
+* **Request Content Type:** `application/json`
+* **Request Body:**
+  ```json
+  {
+    "text": "{{ text }}",
+    "speaker_wav": "{{ speaker_wav }}",
+    "language": "{{ if !language.empty? }}{{ language }}{{ else }}en{{ end }}"
+  }
+  ```
+
+### Dynamic Voices List
+* **Voices Url:** `http://localhost:8020/speakers`
+* **Voices Format:**
+  ```json
+  {
+    "label": "{{ name }}",
+    "parameters": {
+      "speaker_wav": "{{ voice_id }}.wav"
+    }
+  }
+  ```
+
+### Manual Voices List
+* **Voices:** *(Leave empty/not used if a Voices Url is provided)*
+
+### Default Voices
+* **DefaultFemaleVoice:** Enter the exact name of the voice *(without `.wav` at the end)*
+* **DefaultMaleVoice:** Enter the exact name of the voice *(without `.wav` at the end)*
+
+### Thinking Speech
+Those are generated sounds while the AI thinks and speech gets generated. Add these (one per line):
+```text
+uh, ...
+mmh...
+hum...
+huh...
+oh...
+```
+
+### Advanced Settings
+* **Audio Gap (ms):** `0`
+* **Optional Label:** `OmniVoice` *(An optional label, useful when you have multiple services of the same type)*
+
+---
 
 ## Credit
 
